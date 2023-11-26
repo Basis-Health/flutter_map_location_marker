@@ -175,16 +175,19 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     if (_status == _Status.ready) {
       if (widget.headingStream != oldWidget.headingStream) {
         _headingStreamSubscription?.cancel();
+        _headingStreamSubscription = null;
         _subscriptHeadingStream();
       }
       if (widget.followCurrentLocationStream !=
           oldWidget.followCurrentLocationStream) {
         _followCurrentLocationStreamSubscription?.cancel();
+        _followCurrentLocationStreamSubscription = null;
         _subscriptFollowCurrentLocationStream();
       }
       if (widget.turnHeadingUpLocationStream !=
           oldWidget.turnHeadingUpLocationStream) {
         _turnHeadingUpStreamSubscription?.cancel();
+        _turnHeadingUpStreamSubscription = null;
         _subscriptTurnHeadingUpStream();
       }
     }
@@ -307,6 +310,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   void _subscriptPositionStream() {
     _positionStreamSubscription = widget.positionStream.listen(
       (LocationMarkerPosition? position) {
+        if (!mounted) return;
+
         if (position == null) {
           if (_status != _Status.initialing) {
             setState(() {
@@ -344,6 +349,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         }
       },
       onError: (error) {
+        if (!mounted) return;
+
         switch (error) {
           case IncorrectSetupException _:
             setState(() => _status = _Status.incorrectSetup);
@@ -362,6 +369,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
   void _subscriptHeadingStream() {
     _headingStreamSubscription = widget.headingStream.listen(
       (LocationMarkerHeading? heading) {
+        if (!mounted) return;
+
         if (heading == null) {
           if (_currentHeading != null) {
             setState(() => _currentHeading = null);
@@ -389,6 +398,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         }
       },
       onError: (_) {
+        if (!mounted) return;
         if (_currentHeading != null) {
           setState(() => _currentHeading = null);
         }
@@ -418,7 +428,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     }
     _turnHeadingUpStreamSubscription =
         widget.turnHeadingUpLocationStream?.listen((_) {
-      if (_currentHeading != null) {
+      if (mounted && _currentHeading != null) {
         _rotateMap(-_currentHeading!.heading % (2 * pi));
       }
     });
@@ -441,11 +451,13 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     );
 
     _moveMarkerAnimationController!.addListener(() {
-      setState(() => _currentPosition = positionTween.evaluate(animation));
+      if (mounted) {
+        setState(() => _currentPosition = positionTween.evaluate(animation));
+      }
     });
 
     _moveMarkerAnimationController!.addStatusListener((AnimationStatus status) {
-      if (status == AnimationStatus.completed ||
+      if (mounted && status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
         _moveMarkerAnimationController!.dispose();
         _moveMarkerAnimationController = null;
@@ -499,6 +511,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     );
 
     _moveMapAnimationController!.addListener(() {
+      if (!mounted) return;
+  
       final evaluatedLatLng = LatLng(
         latTween.evaluate(animation),
         lngTween.evaluate(animation),
@@ -552,14 +566,14 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     );
 
     _rotateMarkerAnimationController!.addListener(() {
-      if (_status == _Status.ready) {
+      if (mounted && _status == _Status.ready) {
         setState(() => _currentHeading = headingTween.evaluate(animation));
       }
     });
 
     _rotateMarkerAnimationController!
         .addStatusListener((AnimationStatus status) {
-      if (status == AnimationStatus.completed ||
+      if (mounted && status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
         assert(_rotateMarkerAnimationController != null);
         _rotateMarkerAnimationController?.dispose();
@@ -592,6 +606,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     );
 
     _rotateMapAnimationController!.addListener(() {
+      if (!mounted) return;
+
       final evaluatedAngle = angleTween.evaluate(animation) / pi * 180;
 
       if (widget.followScreenPoint == _originPoint &&
@@ -610,7 +626,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     });
 
     _rotateMapAnimationController!.addStatusListener((AnimationStatus status) {
-      if (status == AnimationStatus.completed ||
+      if (mounted && status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
         _rotateMapAnimationController!.dispose();
         _rotateMapAnimationController = null;
