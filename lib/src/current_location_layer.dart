@@ -293,6 +293,14 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     _moveMarkerAnimationController?.dispose();
     _rotateMapAnimationController?.dispose();
     _rotateMarkerAnimationController?.dispose();
+
+    _headingStreamSubscription = null;
+    _followCurrentLocationStreamSubscription = null;
+    _turnHeadingUpStreamSubscription = null;
+    _moveMapAnimationController = null;
+    _moveMarkerAnimationController = null;
+    _rotateMapAnimationController = null;
+    _rotateMarkerAnimationController = null;
     super.dispose();
   }
 
@@ -418,6 +426,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
 
   TickerFuture _moveMarker(LocationMarkerPosition position) {
     _moveMarkerAnimationController?.dispose();
+    _moveMarkerAnimationController = null;
     _moveMarkerAnimationController = AnimationController(
       duration: widget.moveAnimationDuration,
       vsync: this,
@@ -467,6 +476,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     }
 
     _moveMapAnimationController?.dispose();
+    _moveMapAnimationController = null;
     _moveMapAnimationController = AnimationController(
       duration: widget.followAnimationDuration,
       vsync: this,
@@ -527,6 +537,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
 
   TickerFuture _rotateMarker(LocationMarkerHeading heading) {
     _rotateMarkerAnimationController?.dispose();
+    _rotateMarkerAnimationController = null;
     _rotateMarkerAnimationController = AnimationController(
       duration: widget.rotateAnimationDuration,
       vsync: this,
@@ -550,7 +561,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         .addStatusListener((AnimationStatus status) {
       if (status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
-        _rotateMarkerAnimationController!.dispose();
+        assert(_rotateMarkerAnimationController != null);
+        _rotateMarkerAnimationController?.dispose();
         _rotateMarkerAnimationController = null;
       }
     });
@@ -562,8 +574,8 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     final camera = MapCamera.maybeOf(context)!;
 
     _rotateMapAnimationController?.dispose();
+    _rotateMapAnimationController = null;
     if ((camera.rotationRad - angle).abs() < 0.006) {
-      _rotateMapAnimationController = null;
       return TickerFuture.complete();
     }
     _rotateMapAnimationController = AnimationController(
