@@ -419,6 +419,9 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         }
       },
       onError: (error) {
+        if (!mounted) {
+          return;
+        }
         switch (error) {
           case IncorrectSetupException _:
             setState(() => _status = _Status.incorrectSetup);
@@ -469,6 +472,9 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
         }
       },
       onError: (_) {
+        if (!mounted) {
+          return;
+        }
         if (_currentHeading != null) {
           setState(() => _currentHeading = null);
         }
@@ -526,6 +532,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     );
 
     _moveMarkerAnimationController!.addListener(() {
+      if (!mounted) return;
       setState(() => _currentPosition = positionTween.evaluate(animation));
     });
 
@@ -632,6 +639,7 @@ class _CurrentLocationLayerState extends State<CurrentLocationLayer>
     );
 
     _rotateMarkerAnimationController!.addListener(() {
+      if (!mounted) return;
       if (_status == _Status.ready) {
         setState(() => _currentHeading = headingTween.evaluate(animation));
       }
